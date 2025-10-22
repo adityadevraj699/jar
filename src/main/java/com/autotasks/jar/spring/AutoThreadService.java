@@ -14,8 +14,13 @@ public class AutoThreadService {
         this.manager = manager;
     }
 
-    public Future<?> submit(SmartTask task) {
-        return manager.submit(new ProfilingWrapper(task), task.getTaskName());
+    public Future<?> submit(SmartTask task, boolean isProfiling) {
+        if (isProfiling) {
+            return manager.submit(new ProfilingWrapper(task), task.getTaskName());
+        } else {
+            return manager.submit(task, task.getTaskName()); // NO wrapper
+        }
     }
+
 
 }

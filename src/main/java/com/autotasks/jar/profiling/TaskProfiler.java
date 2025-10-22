@@ -27,7 +27,7 @@ public class TaskProfiler {
 
         String type;
         if (ratio > 0.7) type = "CPU";
-        else if (ratio < 0.5) type = "IO"; // use 0.5 for small/short sleep tasks
+        else if (ratio <= 0.3) type = "IO"; // use 0.5 for small/short sleep tasks
         else type = "MIXED";
 
 
