@@ -13,6 +13,7 @@ public class ProfilingWrapper implements Runnable {
     }
 
     public void profileOnceAndStore() {
-        TaskProfiler.profileAndStore(this, task.getClass().getName());
+        TaskProfiler.profileAndStore(this, task.getTaskName());
     }
+
 }

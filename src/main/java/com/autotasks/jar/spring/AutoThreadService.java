@@ -15,6 +15,7 @@ public class AutoThreadService {
     }
 
     public Future<?> submit(SmartTask task) {
-        return manager.submit(new ProfilingWrapper(task), task.getClass().getName());
+        return manager.submit(new ProfilingWrapper(task), task.getTaskName());
     }
+
 }
