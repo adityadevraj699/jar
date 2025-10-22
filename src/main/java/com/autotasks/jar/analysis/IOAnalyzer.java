@@ -1,13 +1,12 @@
 package com.autotasks.jar.analysis;
 
 import org.objectweb.asm.*;
-
 import java.io.InputStream;
 import java.util.Set;
 
 public class IOAnalyzer {
 
-    private static final Set<String> KNOWN_IO_LIBRARIES = Set.of(
+	private static final Set<String> KNOWN_IO_LIBRARIES = Set.of(
             "java/io", "java/nio/file", "java/net", "java/net/http",
             "javax/mail", "javax/persistence", "org/postgresql",
             "org/springframework/data", "org/springframework/mail",
@@ -15,10 +14,6 @@ public class IOAnalyzer {
             "org/apache/commons/fileupload", "com/amazonaws", "com/google/firebase", "java/lang/Thread"
     );
 
-    /**
-     * Analyze given class bytes and return true if method runTask() contains I/O calls.
-     * className: fully-qualified (dot) name (for logging only)
-     */
     public static boolean isIOBound(InputStream classBytes, String className) {
         try {
             ClassReader reader = new ClassReader(classBytes);

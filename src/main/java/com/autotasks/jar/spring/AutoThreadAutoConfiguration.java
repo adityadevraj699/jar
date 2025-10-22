@@ -7,13 +7,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AutoThreadAutoConfiguration {
 
+    // ✅ Static bean to avoid BeanPostProcessor warnings
     @Bean
-    public HybridThreadManager hybridThreadManager() {
+    public static HybridThreadManager hybridThreadManager() {
         return new HybridThreadManager();
     }
 
     @Bean
-    public SmartTaskBeanPostProcessor smartTaskBeanPostProcessor(HybridThreadManager manager) {
+    public static SmartTaskBeanPostProcessor smartTaskBeanPostProcessor(HybridThreadManager manager) {
         return new SmartTaskBeanPostProcessor(manager);
     }
 }

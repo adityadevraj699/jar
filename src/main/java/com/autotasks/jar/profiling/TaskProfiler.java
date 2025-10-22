@@ -1,44 +1,45 @@
 package com.autotasks.jar.profiling;
 
 import com.autotasks.jar.util.MetadataManager;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
 public class TaskProfiler {
 
-    public static void profileAndStore(Runnable task, String className) {
+    public static void profileAndStore(Runnable task, String key) {
         ThreadMXBean bean = ManagementFactory.getThreadMXBean();
         if (bean.isThreadCpuTimeSupported() && !bean.isThreadCpuTimeEnabled()) {
             try { bean.setThreadCpuTimeEnabled(true); } catch (Throwable ignored) {}
         }
 
-        long tid = Thread.currentThread().getId();
-        long cpuBefore = bean.isThreadCpuTimeSupported() ? bean.getThreadCpuTime(tid) : 0;
-        long start = System.nanoTime();
+        long cpuBefore = bean.isThreadCpuTimeSupported() ? bean.getCurrentThreadCpuTime() : 0;
+        long startWall = System.nanoTime();
 
-        task.run();
+        // Run the task
+        try { task.run(); } catch (Exception ignored) {}
 
-        long end = System.nanoTime();
-        long cpuAfter = bean.isThreadCpuTimeSupported() ? bean.getThreadCpuTime(tid) : 0;
+        long endWall = System.nanoTime();
+        long cpuAfter = bean.isThreadCpuTimeSupported() ? bean.getCurrentThreadCpuTime() : 0;
 
-        long wall = end - start;
-        long cpu = bean.isThreadCpuTimeSupported() ? Math.max(0, cpuAfter - cpuBefore) : wall;
-
-        double ratio = wall == 0 ? 1.0 : (double) cpu / (double) wall;
+        long cpuTime = Math.max(0, cpuAfter - cpuBefore);
+        long wallTime = endWall - startWall;
+        double ratio = wallTime == 0 ? 1.0 : (double) cpuTime / wallTime;
 
         String type;
         if (ratio >= 0.7) type = "CPU";
         else if (ratio <= 0.3) type = "IO";
         else type = "MIXED";
 
-        String assigned = switch (type) {
-            case "CPU" -> "PLATFORM";
-            case "IO" -> "VIRTUAL";
-            default -> "MIXED";
-        };
+        String assigned;
+        switch (type) {
+            case "CPU" -> assigned = "PLATFORM";
+            case "IO" -> assigned = "VIRTUAL";
+            default -> assigned = "MIXED";
+        }
 
-        MetadataManager.put(className, assigned, type);
+        MetadataManager.put(key, assigned, type);
 
-        System.out.printf("🧠 Profiling %s → %s (%s) | ratio=%.2f%n", className, assigned, type, ratio);
+        System.out.printf("🧠 Profiling %s → %s (%s) | ratio=%.2f%n", key, assigned, type, ratio);
     }
 }
