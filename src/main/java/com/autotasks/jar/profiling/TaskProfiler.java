@@ -5,31 +5,31 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
 public class TaskProfiler {
+
     public static void profileAndStore(Runnable task, String className) {
         ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-        boolean supported = bean.isThreadCpuTimeSupported();
-        if (supported && !bean.isThreadCpuTimeEnabled()) {
+        if (bean.isThreadCpuTimeSupported() && !bean.isThreadCpuTimeEnabled()) {
             try { bean.setThreadCpuTimeEnabled(true); } catch (Throwable ignored) {}
         }
 
         long tid = Thread.currentThread().getId();
-        long cpuBefore = supported ? bean.getThreadCpuTime(tid) : 0;
+        long cpuBefore = bean.isThreadCpuTimeSupported() ? bean.getThreadCpuTime(tid) : 0;
         long start = System.nanoTime();
 
         task.run();
 
         long end = System.nanoTime();
-        long cpuAfter = supported ? bean.getThreadCpuTime(tid) : 0;
+        long cpuAfter = bean.isThreadCpuTimeSupported() ? bean.getThreadCpuTime(tid) : 0;
 
         long wall = end - start;
-        long cpu = supported ? Math.max(0, cpuAfter - cpuBefore) : wall;
+        long cpu = bean.isThreadCpuTimeSupported() ? Math.max(0, cpuAfter - cpuBefore) : wall;
+
         double ratio = wall == 0 ? 1.0 : (double) cpu / (double) wall;
 
         String type;
-        if (ratio > 0.7) type = "CPU";
-        else if (ratio <= 0.3) type = "IO"; // use 0.5 for small/short sleep tasks
+        if (ratio >= 0.7) type = "CPU";
+        else if (ratio <= 0.3) type = "IO";
         else type = "MIXED";
-
 
         String assigned = switch (type) {
             case "CPU" -> "PLATFORM";
@@ -38,5 +38,7 @@ public class TaskProfiler {
         };
 
         MetadataManager.put(className, assigned, type);
+
+        System.out.printf("🧠 Profiling %s → %s (%s) | ratio=%.2f%n", className, assigned, type, ratio);
     }
 }
