@@ -30,25 +30,60 @@ public class SmartTaskBeanPostProcessor implements BeanPostProcessor {
         }
     }
 
-    @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (bean instanceof com.autotasks.jar.thread.SmartTask) {
-            Class<?> clazz = bean.getClass();
+   @Override
+public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    if (!(bean instanceof com.autotasks.jar.thread.SmartTask)) return bean;
 
-            if (clazz.isAnnotationPresent(SmartTask.class)) {
-                com.autotasks.jar.thread.SmartTask task = (com.autotasks.jar.thread.SmartTask) bean;
-                String fqcn = task.getClass().getName();
+    Class<?> clazz = bean.getClass();
+    com.autotasks.jar.thread.SmartTask task = (com.autotasks.jar.thread.SmartTask) bean;
 
-                if (MetadataManager.get(fqcn) == null) {
-                    System.out.println("🧠 AutoThread: Profiling " + fqcn + " (first time).");
-                    ProfilingWrapper wrapper = new ProfilingWrapper(task);
-                    wrapper.profileOnceAndStore();
-                }
-
-                Future<?> f = manager.submit(() -> task.runTask(), fqcn);
-                System.out.println("🚀 AutoThread: Submitted " + fqcn + " via HybridThreadManager.");
-            }
-        }
-        return bean;
+    // 🔹 CASE 1: Entire class is SmartTask annotated
+    if (clazz.isAnnotationPresent(SmartTask.class)) {
+        handleClassLevel(task, clazz);
     }
+
+    // 🔹 CASE 2: Specific methods are SmartTask annotated
+    for (var method : clazz.getDeclaredMethods()) {
+        if (method.isAnnotationPresent(SmartTask.class)) {
+            handleMethodLevel(task, clazz, method);
+        }
+    }
+
+    return bean;
+}
+
+private void handleClassLevel(com.autotasks.jar.thread.SmartTask task, Class<?> clazz) {
+    String fqcn = clazz.getName();
+    if (MetadataManager.get(fqcn, null) == null) {
+        System.out.println("🧠 Profiling CLASS " + fqcn);
+        new ProfilingWrapper(task).profileOnceAndStore();
+    }
+    manager.submit(() -> task.runTask(), fqcn);
+}
+
+private void handleMethodLevel(com.autotasks.jar.thread.SmartTask task, Class<?> clazz, java.lang.reflect.Method method) {
+    String fqcn = clazz.getName();
+    String key = fqcn + "." + method.getName();
+
+    if (MetadataManager.get(fqcn, method.getName()) == null) {
+        System.out.println("🧠 Profiling METHOD " + key);
+        try {
+            long start = System.nanoTime();
+            method.setAccessible(true);
+            method.invoke(task);
+            long end = System.nanoTime();
+            long duration = end - start;
+            String ioType = duration > 2_000_000 ? "IO" : "CPU"; // simple heuristic
+            String assigned = ioType.equals("IO") ? "VIRTUAL" : "PLATFORM";
+            MetadataManager.put(fqcn, method.getName(), assigned, ioType);
+        } catch (Exception e) {
+            System.err.println("⚠️ Profiling failed for " + key + ": " + e);
+        }
+    }
+
+    manager.submit(() -> {
+        try { method.invoke(task); } catch (Exception ignored) {}
+    }, key);
+}
+
 }

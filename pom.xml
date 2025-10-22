@@ -3,13 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
           https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>com.autotasks</groupId>
   <artifactId>autothread</artifactId>
   <version>0.1.0</version>
   <name>AutoThread</name>
+  <description>Automatic SmartTask detection, profiling, and async scheduling system</description>
 
   <properties>
+    <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,29 +27,21 @@
       <version>9.7</version>
     </dependency>
 
-    <!-- Jackson for JSON -->
-   <dependency>
+    <!-- Jackson for JSON serialization -->
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
       <version>2.17.2</version>
     </dependency>
 
-    <!-- Spring Context (for BeanPostProcessor + Autoconfig) -->
-   <!-- Spring Boot Starter (core auto-configuration + runner) -->
-<dependency>
-  <groupId>org.springframework.boot</groupId>
-  <artifactId>spring-boot-starter</artifactId>
-  <version>3.3.2</version>
-</dependency>
+    <!-- Spring Boot (core auto-configuration + context + beans) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+      <version>3.3.2</version>
+    </dependency>
 
-<dependency>
-  <groupId>org.springframework</groupId>
-  <artifactId>spring-context</artifactId>
-  <version>6.0.15</version>
-</dependency>
-
-
-    <!-- Optional micrometer (kept optional) -->
+    <!-- Optional micrometer for performance metrics -->
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>
@@ -56,7 +52,7 @@
 
   <build>
     <plugins>
-      <!-- Compiler plugin -->
+      <!-- Compiler plugin for Java 21 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -65,7 +61,8 @@
           <release>21</release>
         </configuration>
       </plugin>
-      <!-- Create runnable jar if you want (fat-jar) -->
+
+      <!-- Shade plugin to build runnable fat JAR -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -73,7 +70,9 @@
         <executions>
           <execution>
             <phase>package</phase>
-            <goals><goal>shade</goal></goals>
+            <goals>
+              <goal>shade</goal>
+            </goals>
             <configuration>
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <transformers>
@@ -85,6 +84,14 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Spring Boot plugin (optional, just for clean build lifecycle) -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>3.3.2</version>
+      </plugin>
+
     </plugins>
   </build>
 </project>
