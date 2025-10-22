@@ -12,8 +12,13 @@ public class ProfilingWrapper implements Runnable {
 
     @Override
     public void run() {
-        task.runTask(); // run directly
+        try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
+            exec.submit(() -> task.runTask()).get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
 
 
     public void profileOnceAndStore() {

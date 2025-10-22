@@ -12,7 +12,7 @@ public class IOAnalyzer {
             "javax/mail", "javax/persistence", "org/postgresql",
             "org/springframework/data", "org/springframework/mail",
             "org/springframework/web/client", "org/springframework/kafka",
-            "org/apache/commons/fileupload", "com/amazonaws", "com/google/firebase"
+            "org/apache/commons/fileupload", "com/amazonaws", "com/google/firebase", "java/lang/Thread"
     );
 
     /**
